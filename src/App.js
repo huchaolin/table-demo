@@ -3,14 +3,24 @@ import axios from 'axios';
 import {Table} from 'antd';
 import 'antd/lib/table/style/css'; 
 
-const renderContent = (value, row, index) => {
+const renderContent =  (value, row, index) => {
   const obj = {
     children: value,
     props: {},
   };
-console.log(value, row, index)
+  console.log(value, row ,index)
+  // if (index === 2) {
+  //   obj.props.rowSpan = 2;
+  // }
+  // // These two are merged into above cell
+  // if (index === 3) {
+  //   obj.props.rowSpan = 0;
+  // }
+  // if (index === 4) {
+  //   obj.props.colSpan = 0;
+  // }
   return obj;
-};
+}
 
 class App extends Component {
   constructor(props) {
@@ -61,14 +71,37 @@ class App extends Component {
     const routeNameObj = {};
    data.forEach(v => {
     routeNameObj[v.RouteName] =  routeNameObj[v.RouteName] ? [v, ...routeNameObj[v.RouteName]] : [v];
-   });
-  //排序时间
-   Object.keys(routeNameObj).forEach(v => {
-    routeNameObj[v].sort( (v1, v2) => {
-     const time1 = new Date(v1.Date +" " + v1.Time); 
-     const time2 = new Date(v2.Date +" " + v2.Time);
-       return time1.getTime() - time2.getTime();
-    })
+  });
+  //计算相同班次的人数
+
+  Object.keys(routeNameObj).forEach(v => {
+    const timeDic = {};
+    routeNameObj[v].forEach(v => {
+        timeDic[v.Time] =  timeDic[v.Time] ? [v, ...timeDic[v.Time]] : [v];
+    });
+    //计算相同班次的相同时间总人数
+    Object.keys(timeDic).forEach( v => {
+      let total = 0;
+      timeDic[v].forEach(v => {
+        total = total +v.Number;
+      });
+      timeDic[v].forEach( v =>{v.total = total});
+    });
+    //计算相同班次相同时间相同航站楼的总人数
+    Object.keys(timeDic).forEach( v => {
+      const terminalDic = {};
+      timeDic[v].forEach(v => {
+        terminalDic[v.Terminal] =  terminalDic[v.Terminal] ? [v, ...terminalDic[v.Terminal]] : [v];
+      });
+      Object.keys(terminalDic).forEach( v => {
+        let total = 0;
+        terminalDic[v].forEach(v => {
+          total = total +v.Number;
+        });
+        terminalDic[v].forEach( v =>{v.terminalTotal = total});
+      });
+    });
+  
   });
   //排序航站楼
   Object.keys(routeNameObj).forEach(v => {
@@ -78,11 +111,19 @@ class App extends Component {
        return num1 - num2;
     })
   });
+  //排序时间
+   Object.keys(routeNameObj).forEach(v => {
+    routeNameObj[v].sort( (v1, v2) => {
+     const time1 = new Date(v1.Date +" " + v1.Time); 
+     const time2 = new Date(v2.Date +" " + v2.Time);
+       return time1.getTime() - time2.getTime();
+    })
+  });
    let arr =[];
-   Object.keys(routeNameObj).forEach( v=> {
+   Object.keys(routeNameObj).forEach( v => {
      arr = arr.concat(routeNameObj[v]);
    });
-console.log(JSON.stringify(arr));
+
    return arr;
     
   }
